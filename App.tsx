@@ -16,7 +16,8 @@ import WebView from 'react-native-webview';
 import axios from 'axios';
 
 const API_URL = 'https://example.com/api/register';
-const WEBVIEW_URL = 'https://example.com';
+const WEBVIEW_URL = 'https://www.myweb.com';
+const INJECTED_JS = 'window.AUTH_TOKEN = "Bearer abc123"; true';
 
 function App(): React.JSX.Element {
   const [inputValue, setInputValue] = useState('');
@@ -45,7 +46,11 @@ function App(): React.JSX.Element {
         />
         <Button title="Submit" onPress={handleSubmit} />
       </View>
-      <WebView style={styles.webview} source={{uri: WEBVIEW_URL}} />
+      <WebView
+        style={styles.webview}
+        source={{uri: WEBVIEW_URL}}
+        injectedJavaScript={INJECTED_JS}
+      />
     </View>
   );
 }
