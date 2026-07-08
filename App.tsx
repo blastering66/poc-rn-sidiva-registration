@@ -4,53 +4,74 @@
  * @format
  */
 
-import React, {useState} from 'react';
+import React, {useState, useCallback, useEffect} from 'react';
 import {
   Alert,
   Button,
+  StatusBar,
   StyleSheet,
   TextInput,
   View,
 } from 'react-native';
 import WebView from 'react-native-webview';
-import axios from 'axios';
 
-const API_URL = 'https://example.com/api/register';
-const WEBVIEW_URL = 'https://www.myweb.com';
+const WEBVIEW_URL = 'https://www.smartfren.com/activation';
 const INJECTED_JS = 'window.AUTH_TOKEN = "Bearer abc123"; true';
 
 function App(): React.JSX.Element {
-  const [inputValue, setInputValue] = useState('');
+  const [inputJWT, setInputJWT] = useState('');
+  const [currentURL, setCurrentURL] = useState('');
 
-  const handleSubmit = async () => {
+  const handleSubmit = useCallback(async () => {
     try {
-      const response = await axios.post(API_URL, {data: inputValue});
-      Alert.alert('Success', JSON.stringify(response.data));
+      setCurrentURL(WEBVIEW_URL);
     } catch (error: unknown) {
-      const message =
-        axios.isAxiosError(error) && error.message
-          ? error.message
-          : 'An unexpected error occurred';
-      Alert.alert('Error', message);
+      console.log('Error submitting JWT:', error);
     }
-  };
+  }, [inputJWT]);
+
+  const reset = useCallback(() => {
+    setInputJWT('');
+    setCurrentURL('');
+  }, []);
+
+  const renderWebView = useCallback(() => {
+    if (inputJWT === '' || currentURL === '') return null;
+    const currentInjectJS = `window.AUTH_TOKEN = "Bearer ${inputJWT}"; true`;
+    console.log('Injected JS:', currentInjectJS);
+      return (
+        <WebView
+          style={styles.webview}
+          source={{uri: currentURL}}
+          injectedJavaScript={currentInjectJS}
+          onNavigationStateChange={navState => {
+            console.log('URL Changed:', navState?.url);
+          }}
+        />
+      );
+  }, [inputJWT, currentURL]);
+
+  useEffect(() => {
+    console.log('Current URL:', currentURL);
+    console.log('Input JWT:', inputJWT);
+  }, [currentURL, inputJWT]);
 
   return (
     <View style={styles.container}>
+      <StatusBar barStyle="dark-content" />
       <View style={styles.formContainer}>
         <TextInput
           style={styles.input}
-          placeholder="Enter value"
-          value={inputValue}
-          onChangeText={setInputValue}
+          placeholder="Input JWT Token"
+          value={inputJWT}
+          onChangeText={setInputJWT}
         />
-        <Button title="Submit" onPress={handleSubmit} />
+        <View style={{flexDirection: 'row', gap: 10}}>
+          <Button title="Submit" onPress={handleSubmit} />
+          <Button title="Reset" onPress={reset} />
+        </View>
       </View>
-      <WebView
-        style={styles.webview}
-        source={{uri: WEBVIEW_URL}}
-        injectedJavaScript={INJECTED_JS}
-      />
+      {renderWebView()}
     </View>
   );
 }
@@ -58,6 +79,7 @@ function App(): React.JSX.Element {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    paddingTop: 10,
   },
   formContainer: {
     padding: 16,
