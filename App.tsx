@@ -5,6 +5,7 @@
  */
 
 import React, {useState, useCallback, useEffect} from 'react';
+import {Platform, ToastAndroid} from 'react-native';
 import {
   Alert,
   Button,
@@ -16,7 +17,6 @@ import {
 import WebView from 'react-native-webview';
 
 const WEBVIEW_URL = 'https://www.smartfren.com/activation';
-const INJECTED_JS = 'window.AUTH_TOKEN = "Bearer abc123"; true';
 
 function App(): React.JSX.Element {
   const [inputJWT, setInputJWT] = useState('');
@@ -26,7 +26,6 @@ function App(): React.JSX.Element {
     try {
       setCurrentURL(WEBVIEW_URL);
     } catch (error: unknown) {
-      console.log('Error submitting JWT:', error);
     }
   }, [inputJWT]);
 
@@ -45,16 +44,19 @@ function App(): React.JSX.Element {
           source={{uri: currentURL}}
           injectedJavaScript={currentInjectJS}
           onNavigationStateChange={navState => {
-            console.log('URL Changed:', navState?.url);
+            if (Platform.OS === 'android') {
+              ToastAndroid.show(`Navigated to: ${navState?.url}`, ToastAndroid.SHORT);
+              ToastAndroid.show(`AUTH TOKEN: Bearer ${inputJWT}`, ToastAndroid.SHORT);
+            }
           }}
         />
       );
   }, [inputJWT, currentURL]);
 
-  useEffect(() => {
-    console.log('Current URL:', currentURL);
-    console.log('Input JWT:', inputJWT);
-  }, [currentURL, inputJWT]);
+  // useEffect(() => {
+  //   console.log('Current URL:', currentURL);
+  //   console.log('Input JWT:', inputJWT);
+  // }, [currentURL, inputJWT]);
 
   return (
     <View style={styles.container}>
@@ -62,7 +64,7 @@ function App(): React.JSX.Element {
       <View style={styles.formContainer}>
         <TextInput
           style={styles.input}
-          placeholder="Input JWT Token"
+          placeholder="Input Token"
           value={inputJWT}
           onChangeText={setInputJWT}
         />
